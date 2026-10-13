@@ -1,0 +1,3 @@
+- [React 19 peer dep conflicts](react19-peer-deps.md) — react-day-picker@8 and framer-motion@11 declare react@^18 peers; use --legacy-peer-deps in npm ci until they're upgraded.
+- [Express 5 wildcard routes](express5-wildcards.md) — app.use("*", ...) must become app.use("/{*splat}", ...) for path-to-regexp v8 compatibility.
+- [Post-merge script](post-merge-config.md) — uses npm ci --legacy-peer-deps; timeout is 60s (npm ci takes ~22-25s on this project).

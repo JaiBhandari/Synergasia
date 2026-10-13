@@ -1,0 +1,8 @@
+uploads = []
+generated = []
+
+[[outputs]]
+id = "ztzXjZ8FcG9Vn4rBKig-u"
+uri = "file://synergasia_l0.pptx"
+type = "slides"
+title = "Synergasia L0 Presentation"

@@ -1,0 +1,51 @@
+I want to add a few things to the university information. I want to also include some kew dates for universities, which are actually going to be dynamic fields. Along with entering the University name and website, the user should be able to dynamically add fields for dates, with the field category itself being chosen through a check-box type list. The different options for dates category types are:
+Admissions Cycle Dates :
+
+Early Admissions :
+
+Early Action (EA) Application Opens
+Early Action Deadline
+Early Action Decision Release
+Restrictive/Single-Choice Early Action (if offered — often same timeline but slightly different rules)
+Early Decision I Application Opens
+Early Decision I Deadline
+Early Decision I Decision Release
+Early Decision II Deadline (for schools with ED II)
+Early Decision II Decision Release
+
+Regular Admissions :
+
+Regular Decision Application Opens
+Regular Decision Deadline
+Regular Decision Decision Release (or notification window, e.g., “late March”)
+
+Rolling Admissions :
+
+Application Opens
+Priority Deadline(s) (often for scholarships, honors, or competitive programs)
+Final Deadline (if applicable — sometimes “until space runs out”)
+
+Transfer Admissions :
+
+Transfer Application Opens
+Transfer Application Deadline(s) (often Fall/Spring specific)
+Transfer Decision Release
+
+💰 Financial Aid & Scholarships
+FAFSA Opens (U.S. only — Oct 1 previously, now Dec 1 starting 2024–25 cycle)
+CSS Profile Opens (if used)
+Priority Financial Aid Deadline
+Scholarship Deadlines (automatic or separate applications)
+International Aid Deadlines (if applicable)
+
+📄 Supporting Materials Deadlines
+Test Score Submission Deadline (SAT/ACT, TOEFL, IELTS, etc.)
+Recommendation Letter Deadline
+Portfolio/Audition Deadline (for art, music, theatre programs)
+Honors College Deadline (if separate application)
+
+📆 Enrollment & Next Steps
+Admitted Student Reply Date (usually May 1 for U.S. regular decision, but varies internationally)
+Housing Application Deadline
+Orientation Dates
+Semester Start Date (Fall/Spring)

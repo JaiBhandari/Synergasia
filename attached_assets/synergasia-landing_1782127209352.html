@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Synergasia — Guiding Students Toward Their Future</title>
+  <meta name="description" content="A comprehensive student counseling platform with role-based access for Admins, Counselors, and Students. Multi-tenant, enterprise-grade RBAC." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet" />
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.11.4/ScrollTrigger.min.js"></script>
+
+  <style>
+    /* ============================================================
+       DESIGN TOKENS — exact colors from synergasia_L0_v1.pptx
+       #D4897B  terracotta  (slides 3/7/11 full-bg)
+       #F5F3F0  warm cream  (slides 1/5/9/13/15 bg)
+       #FFFFFF  white       (slides 2/4/6/8/10/12/14/16 bg)
+       #2A2A2A  charcoal    (body text)
+    ============================================================ */
+    :root {
+      --bg-terra:   #D4897B;
+      --bg-terra-dk:#B8705E;
+      --bg-terra-lt:#E8B09E;
+      --bg-cream:   #F5F3F0;
+      --bg-white:   #FFFFFF;
+
+      --grad:       linear-gradient(135deg, #D4897B, #B8705E);
+      --grad-text:  linear-gradient(135deg, #D4897B, #C07A65);
+
+      --text-1:     #2A2A2A;
+      --text-2:     #3D3D3D;
+      --text-3:     #666666;
+      --text-4:     #999999;
+      --text-inv:   #F5F3F0;
+      --text-inv2:  rgba(245,243,240,0.78);
+      --text-inv3:  rgba(245,243,240,0.50);
+
+      --border:     rgba(42,42,42,0.09);
+      --border-md:  rgba(42,42,42,0.14);
+      --border-acc: rgba(212,137,123,0.32);
+
+      --shadow-sm:  0 1px 3px rgba(42,42,42,0.08), 0 1px 2px rgba(42,42,42,0.05);
+      --shadow-md:  0 4px 16px rgba(42,42,42,0.10), 0 1px 3px rgba(42,42,42,0.06);
+      --shadow-lg:  0 12px 40px rgba(42,42,42,0.14), 0 2px 8px rgba(42,42,42,0.08);
+      --shadow-terra: 0 8px 32px rgba(212,137,123,0.30);
+
+      --r-md: 16px; --r-lg: 24px; --r-xl: 32px;
+      --ff-display: 'Plus Jakarta Sans', sans-serif;
+      --ff-body:    'Inter', sans-serif;
+      --dur: 0.3s;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body { background: var(--bg-cream); color: var(--text-1); font-family: var(--ff-body); overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+    a { text-decoration: none; color: inherit; }
+
+    /* ============================================================ NAVBAR */
+    .nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 900;
+      padding: 22px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      transition: padding var(--dur), background var(--dur), border-color var(--dur), box-shadow var(--dur);
+      border-bottom: 1px solid transparent;
+    }
+    .nav-logo-text { font-family: var(--ff-display); font-size: 20px; font-weight: 800; color: var(--text-inv); transition: color var(--dur); }
+    .nav-links { display: flex; gap: 36px; list-style: none; }
+    .nav-links a { font-size: 14px; font-weight: 500; color: var(--text-inv2); transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text-inv); }
+    .nav-right { display: flex; align-items: center; gap: 12px; }
+    .nav-login {
+      font-size: 14px; font-weight: 600; color: var(--text-inv2);
+      padding: 10px 18px; border-radius: 100px;
+      border: 1.5px solid rgba(245,243,240,0.32);
+      transition: color 0.2s, border-color 0.2s, background 0.2s, transform 0.2s;
+    }
+    .nav-login:hover { color: var(--text-inv); border-color: rgba(245,243,240,0.65); background: rgba(245,243,240,0.08); transform: translateY(-1px); }
+    .nav-cta {
+      background: var(--text-inv); color: var(--bg-terra-dk);
+      font-size: 14px; font-weight: 700;
+      padding: 10px 24px; border-radius: 100px;
+      transition: opacity 0.2s, transform 0.2s, background var(--dur), color var(--dur);
+    }
+    .nav-cta:hover { opacity: 0.88; transform: translateY(-1px); }
+    .nav.stuck {
+      padding: 14px 40px;
+      background: rgba(245,243,240,0.92); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border-color: var(--border); box-shadow: var(--shadow-sm);
+    }
+    .nav.stuck .nav-logo-text { color: var(--text-1); }
+    .nav.stuck .nav-links a { color: var(--text-3); }
+    .nav.stuck .nav-links a:hover { color: var(--text-1); }
+    .nav.stuck .nav-login { color: var(--text-2); border-color: var(--border-md); }
+    .nav.stuck .nav-login:hover { color: var(--bg-terra-dk); border-color: var(--border-acc); background: rgba(212,137,123,0.06); }
+    .nav.stuck .nav-cta { background: var(--bg-terra); color: var(--text-inv); }
+    .ham { display: none; flex-direction: column; gap: 5px; cursor: pointer; padding: 6px; background: none; border: none; }
+    .ham span { width: 24px; height: 2px; background: var(--text-inv); border-radius: 2px; transition: all 0.3s; }
+    .nav.stuck .ham span { background: var(--text-1); }
+    .ham.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+    .ham.open span:nth-child(2) { opacity: 0; }
+    .ham.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+    .mob-menu {
+      display: none; position: fixed; inset: 0; z-index: 800;
+      flex-direction: column; align-items: center; justify-content: center; gap: 40px;
+      background: rgba(245,243,240,0.97); backdrop-filter: blur(24px);
+    }
+    .mob-menu.open { display: flex; }
+    .mob-menu a { font-family: var(--ff-display); font-size: 30px; font-weight: 700; color: var(--text-1); transition: color 0.2s; }
+    .mob-menu a:hover { color: var(--bg-terra); }
+    .mob-cta-link { color: var(--bg-terra) !important; }
+
+    /* ============================================================ HERO */
+    .hero {
+      position: relative; min-height: 100dvh;
+      display: flex; align-items: center; justify-content: center;
+      background: var(--bg-terra); overflow: hidden;
+    }
+    #hero-canvas { position: absolute; inset: 0; width: 100%; height: 100%; z-index: 0; }
+    .hero-vignette {
+      position: absolute; inset: 0; z-index: 1; pointer-events: none;
+      background: radial-gradient(ellipse 75% 55% at 50% 50%, transparent 40%, rgba(150,70,55,0.28) 100%);
+    }
+    .hero-content { position: relative; z-index: 2; text-align: center; padding: 0 24px; max-width: 920px; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(245,243,240,0.14); border: 1px solid rgba(245,243,240,0.28);
+      border-radius: 100px; padding: 7px 18px; margin-bottom: 36px;
+      font-size: 12px; font-weight: 600; letter-spacing: 0.07em; color: var(--text-inv); text-transform: uppercase;
+      opacity: 0;
+    }
+    .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text-inv); animation: blink 2.2s ease-in-out infinite; }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.35} }
+    .hero-title { font-family: var(--ff-display); font-size: clamp(44px,7.5vw,90px); font-weight: 800; line-height: 1.08; letter-spacing: -0.035em; color: var(--text-inv); margin-bottom: 28px; }
+    .hero-title .clip { overflow: hidden; display: block; }
+    .hero-title .inner { display: block; transform: translateY(115%); }
+    .hero-title .ital { font-style: italic; opacity: 0.88; }
+    .hero-sub { font-size: clamp(16px,2.2vw,20px); color: var(--text-inv2); line-height: 1.72; max-width: 580px; margin: 0 auto 52px; opacity: 0; }
+    .hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; opacity: 0; }
+    .btn-primary {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--text-inv); color: var(--bg-terra-dk);
+      padding: 16px 36px; border-radius: 100px; font-size: 15px; font-weight: 700;
+      box-shadow: 0 4px 24px rgba(42,42,42,0.20);
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-primary:hover { opacity: 0.92; transform: translateY(-2px); box-shadow: 0 8px 36px rgba(42,42,42,0.26); }
+    .btn-ghost {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; color: var(--text-inv); border: 1.5px solid rgba(245,243,240,0.50);
+      padding: 16px 36px; border-radius: 100px; font-size: 15px; font-weight: 600;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .btn-ghost:hover { background: rgba(245,243,240,0.12); border-color: rgba(245,243,240,0.75); transform: translateY(-2px); }
+    .btn-terra {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: var(--bg-terra); color: var(--text-inv);
+      padding: 16px 36px; border-radius: 100px; font-size: 15px; font-weight: 700;
+      box-shadow: var(--shadow-terra);
+      transition: opacity 0.2s, transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-terra:hover { opacity: 0.90; transform: translateY(-2px); box-shadow: 0 12px 40px rgba(212,137,123,0.40); }
+    .btn-terra-ghost {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: transparent; color: var(--bg-terra-dk); border: 1.5px solid var(--border-acc);
+      padding: 16px 36px; border-radius: 100px; font-size: 15px; font-weight: 600;
+      transition: background 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .btn-terra-ghost:hover { background: rgba(212,137,123,0.07); border-color: var(--bg-terra); transform: translateY(-2px); }
+    .hero-scroll {
+      position: absolute; bottom: 36px; left: 50%; transform: translateX(-50%);
+      z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px;
+      color: var(--text-inv3); font-size: 10px; font-weight: 600; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0;
+    }
+    .scroll-bar { width: 1px; height: 44px; background: linear-gradient(to bottom, var(--text-inv), transparent); animation: scrollDrop 2.2s ease-in-out infinite; }
+    @keyframes scrollDrop {
+      0%   { transform:scaleY(0); transform-origin:top; opacity:0; }
+      30%  { opacity:1; }
+      50%  { transform:scaleY(1); transform-origin:top; }
+      51%  { transform:scaleY(1); transform-origin:bottom; }
+      100% { transform:scaleY(0); transform-origin:bottom; opacity:0.3; }
+    }
+
+    /* ============================================================ TICKER */
+    .ticker { background: var(--bg-terra-dk); padding: 15px 0; overflow: hidden; }
+    .ticker-track { display: flex; white-space: nowrap; animation: tickerScroll 30s linear infinite; }
+    .ticker-track:hover { animation-play-state: paused; }
+    @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    .ticker-item { display: inline-flex; align-items: center; gap: 12px; padding: 0 32px; font-size: 12px; font-weight: 700; letter-spacing: 0.10em; text-transform: uppercase; color: rgba(245,243,240,0.60); }
+    .ticker-item span { color: var(--text-inv); font-size: 14px; }
+
+    /* ============================================================ SHARED */
+    section { padding: 128px 40px; }
+    .container { max-width: 1200px; margin: 0 auto; }
+    .section-label { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase; color: var(--bg-terra); margin-bottom: 18px; }
+    .section-label.inv { color: rgba(245,243,240,0.70); }
+    .section-title { font-family: var(--ff-display); font-size: clamp(30px,4.5vw,54px); font-weight: 800; line-height: 1.15; letter-spacing: -0.025em; color: var(--text-1); }
+    .section-title.inv { color: var(--text-inv); }
+    .section-sub { font-size: 17px; color: var(--text-3); line-height: 1.72; max-width: 520px; margin-top: 16px; }
+    .section-sub.inv { color: var(--text-inv2); }
+    .terra-word { background: var(--grad-text); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+    .divider-line { width: 48px; height: 3px; background: var(--bg-terra); border-radius: 2px; margin-bottom: 24px; }
+
+    /* ============================================================ ROLES — white bg */
+    .roles-sect { background: var(--bg-white); }
+    .roles-head { text-align: center; margin-bottom: 72px; }
+    .roles-head .section-sub { margin: 16px auto 0; }
+    .roles-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 24px; }
+    .role-card {
+      position: relative; overflow: hidden;
+      background: var(--bg-cream); border: 1px solid var(--border); border-radius: var(--r-xl);
+      padding: 48px 40px 44px;
+      transition: transform var(--dur), border-color var(--dur), box-shadow var(--dur);
+      opacity: 0; transform: translateY(48px);
+    }
+    .role-card::after { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:var(--bg-terra); opacity:0; transition:opacity var(--dur); }
+    .role-card::before { content:''; position:absolute; top:-60px; right:-60px; width:180px; height:180px; border-radius:50%; background:var(--bg-terra); opacity:0.04; pointer-events:none; }
+    .role-card:hover { transform:translateY(-10px)!important; border-color:var(--border-acc); box-shadow:var(--shadow-lg); }
+    .role-card:hover::after { opacity:1; }
+    .role-num { font-family:var(--ff-display); font-size:72px; font-weight:800; color:var(--bg-terra); opacity:0.10; line-height:1; margin-bottom:20px; }
+    .role-icon-wrap { width:56px; height:56px; border-radius:16px; background:rgba(212,137,123,0.12); display:flex; align-items:center; justify-content:center; margin-bottom:24px; font-size:24px; }
+    .role-name { font-family:var(--ff-display); font-size:23px; font-weight:700; margin-bottom:10px; color:var(--text-1); }
+    .role-tagline { font-size:15px; color:var(--text-3); line-height:1.65; margin-bottom:28px; }
+    .role-feats { list-style:none; display:flex; flex-direction:column; gap:12px; }
+    .role-feats li { display:flex; align-items:flex-start; gap:11px; font-size:14px; color:var(--text-2); line-height:1.55; }
+    .chk { width:18px; height:18px; min-width:18px; border-radius:50%; background:rgba(212,137,123,0.14); color:var(--bg-terra-dk); display:flex; align-items:center; justify-content:center; font-size:9px; margin-top:1px; font-weight:700; }
+
+    /* ============================================================ FEATURES — cream bg */
+    .features-sect { background: var(--bg-cream); }
+    .features-head { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:end; margin-bottom:72px; }
+    .features-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:20px; }
+    .feat-card {
+      background: var(--bg-white); border: 1px solid var(--border); border-radius: var(--r-lg);
+      padding: 32px 28px; box-shadow: var(--shadow-sm);
+      transition: box-shadow var(--dur), border-color var(--dur), transform var(--dur);
+      opacity: 0; transform: translateY(32px);
+    }
+    .feat-card:hover { box-shadow:var(--shadow-md); border-color:var(--border-acc); transform:translateY(-5px)!important; }
+    .feat-icon { width:48px; height:48px; border-radius:14px; background:rgba(212,137,123,0.10); display:flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:22px; }
+    .feat-card h3 { font-family:var(--ff-display); font-size:16px; font-weight:700; margin-bottom:10px; color:var(--text-1); }
+    .feat-card p { font-size:13.5px; color:var(--text-3); line-height:1.68; }
+
+    /* ============================================================ WORKFLOW — white bg */
+    .workflow-sect { background: var(--bg-white); }
+    .workflow-head { text-align:center; margin-bottom:80px; }
+    .workflow-head .section-sub { margin:16px auto 0; }
+    .workflow-steps { display:flex; gap:0; position:relative; }
+    .workflow-steps::before { content:''; position:absolute; top:20px; left:10%; right:10%; height:1px; background:linear-gradient(90deg,var(--bg-terra),var(--bg-terra-lt),var(--bg-terra)); opacity:0.22; }
+    .workflow-step { flex:1; text-align:center; padding:0 16px; opacity:0; transform:translateY(28px); }
+    .ws-circle { width:40px; height:40px; border-radius:50%; background:var(--bg-terra); color:var(--text-inv); display:flex; align-items:center; justify-content:center; font-family:var(--ff-display); font-size:14px; font-weight:700; margin:0 auto 24px; box-shadow:0 4px 16px rgba(212,137,123,0.35); }
+    .ws-label { font-family:var(--ff-display); font-size:13px; font-weight:700; color:var(--bg-terra-dk); text-transform:uppercase; letter-spacing:0.06em; margin-bottom:10px; }
+    .ws-desc { font-size:14px; color:var(--text-3); line-height:1.65; }
+
+    /* ============================================================ DIFFERENTIATORS — cream bg */
+    .diff-sect { background: var(--bg-cream); }
+    .diff-head { display:grid; grid-template-columns:1fr 1fr; gap:48px; align-items:end; margin-bottom:72px; }
+    .diff-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:24px; }
+    .diff-card {
+      position:relative; overflow:hidden;
+      background:var(--bg-white); border:1px solid var(--border); border-radius:var(--r-xl); padding:48px 40px;
+      box-shadow:var(--shadow-sm);
+      opacity:0; transform:translateY(44px);
+      transition:transform var(--dur), border-color var(--dur), box-shadow var(--dur);
+    }
+    .diff-card:hover { border-color:var(--border-acc); box-shadow:var(--shadow-lg); transform:translateY(-8px)!important; }
+    .diff-num { position:absolute; top:20px; right:28px; font-family:var(--ff-display); font-size:88px; font-weight:800; color:var(--bg-terra); opacity:0.06; line-height:1; pointer-events:none; }
+    .diff-card-line { width:36px; height:3px; border-radius:2px; background:var(--bg-terra); margin-bottom:24px; }
+    .diff-icon { font-size:36px; margin-bottom:20px; display:block; }
+    .diff-card h3 { font-family:var(--ff-display); font-size:21px; font-weight:700; margin-bottom:14px; line-height:1.3; color:var(--text-1); }
+    .diff-card p { font-size:15px; color:var(--text-3); line-height:1.72; }
+
+    /* ============================================================ STATS — terracotta bg */
+    .stats-sect { background:var(--bg-terra); text-align:center; position:relative; overflow:hidden; }
+    .stats-sect::before { content:''; position:absolute; inset:0; background:radial-gradient(ellipse 80% 60% at 50% 0%,rgba(245,243,240,0.08) 0%,transparent 70%); pointer-events:none; }
+    .stats-title { margin-bottom:72px; position:relative; }
+    .stats-grid { display:grid; grid-template-columns:repeat(4,1fr); gap:40px; position:relative; }
+    .stat-item { opacity:0; transform:translateY(24px); }
+    .stat-divider { width:40px; height:2px; border-radius:1px; background:rgba(245,243,240,0.30); margin:0 auto 20px; }
+    .stat-val { font-family:var(--ff-display); font-size:clamp(44px,5.5vw,68px); font-weight:800; line-height:1; color:var(--text-inv); margin-bottom:14px; }
+    .stat-lbl { font-size:15px; color:var(--text-inv2); line-height:1.5; }
+
+    /* ============================================================ CTA — white bg */
+    .cta-sect { background:var(--bg-white); text-align:center; }
+    .cta-inner { max-width:720px; margin:0 auto; }
+    .terra-pill { display:inline-flex; align-items:center; gap:8px; background:rgba(212,137,123,0.10); border:1px solid var(--border-acc); border-radius:100px; padding:6px 16px; margin-bottom:24px; font-size:12px; font-weight:600; letter-spacing:0.08em; color:var(--bg-terra-dk); text-transform:uppercase; }
+    .cta-inner .section-title { margin-bottom:20px; }
+    .cta-inner p { font-size:17px; color:var(--text-3); line-height:1.72; margin-bottom:48px; }
+    .cta-actions { display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+    .pillars { display:flex; gap:32px; justify-content:center; flex-wrap:wrap; margin-top:72px; padding-top:48px; border-top:1px solid var(--border); }
+    .pillar { display:flex; align-items:center; gap:10px; font-size:14px; font-weight:500; color:var(--text-3); }
+    .pillar-dot { width:6px; height:6px; border-radius:50%; background:var(--bg-terra); flex-shrink:0; }
+
+    /* ============================================================ FOOTER */
+    footer { background:var(--bg-cream); border-top:1px solid var(--border); padding:48px 40px; }
+    .footer-inner { max-width:1200px; margin:0 auto; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:20px; }
+    .footer-logo { font-family:var(--ff-display); font-size:19px; font-weight:800; color:var(--bg-terra); }
+    .footer-copy { font-size:14px; color:var(--text-4); }
+    .footer-links { display:flex; gap:28px; }
+    .footer-links a { font-size:14px; color:var(--text-4); transition:color 0.2s; cursor:pointer; }
+    .footer-links a:hover { color:var(--bg-terra); }
+
+    /* ============================================================ CONTACT MODAL */
+    .contact-modal {
+      display:none; position:fixed; inset:0; z-index:1000;
+      align-items:center; justify-content:center; padding:24px;
+    }
+    .contact-modal.open { display:flex; }
+    .contact-overlay {
+      position:absolute; inset:0;
+      background:rgba(42,42,42,0.45);
+      backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px);
+      cursor:pointer;
+    }
+    .contact-box {
+      position:relative; z-index:1;
+      background:var(--bg-white);
+      border:1px solid var(--border);
+      border-radius:var(--r-xl);
+      padding:56px 48px;
+      max-width:480px; width:100%;
+      box-shadow:var(--shadow-lg);
+      animation:slideUp 0.35s cubic-bezier(0.34,1.56,0.64,1);
+    }
+    @keyframes slideUp { from{opacity:0;transform:translateY(24px) scale(0.97)} to{opacity:1;transform:translateY(0) scale(1)} }
+    .contact-close {
+      position:absolute; top:20px; right:20px;
+      background:rgba(42,42,42,0.06); border:none; border-radius:50%;
+      width:36px; height:36px; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; color:var(--text-3);
+      transition:background 0.2s, color 0.2s;
+    }
+    .contact-close:hover { background:rgba(212,137,123,0.12); color:var(--bg-terra-dk); }
+    .contact-terra-bar { width:48px; height:3px; background:var(--bg-terra); border-radius:2px; margin-bottom:28px; }
+    .contact-box h2 { font-family:var(--ff-display); font-size:28px; font-weight:800; color:var(--text-1); margin-bottom:12px; }
+    .contact-box > p { font-size:15px; color:var(--text-3); line-height:1.65; margin-bottom:36px; }
+    .contact-email-row {
+      display:flex; align-items:center; gap:14px;
+      background:var(--bg-cream); border:1px solid var(--border-acc);
+      border-radius:var(--r-md); padding:18px 22px; margin-bottom:12px;
+    }
+    .contact-email-icon { width:42px; height:42px; border-radius:12px; background:rgba(212,137,123,0.12); display:flex; align-items:center; justify-content:center; font-size:18px; flex-shrink:0; }
+    .contact-email-label { font-size:11px; font-weight:600; letter-spacing:0.08em; text-transform:uppercase; color:var(--text-4); margin-bottom:4px; }
+    .contact-email-value { font-size:15px; font-weight:600; color:var(--text-1); }
+    .contact-email-value a { color:var(--bg-terra-dk); transition:color 0.2s; }
+    .contact-email-value a:hover { color:var(--bg-terra); }
+    .contact-btn {
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      margin-top:28px; width:100%;
+      background:var(--bg-terra); color:var(--text-inv);
+      padding:15px 32px; border-radius:100px;
+      font-size:15px; font-weight:700;
+      box-shadow:var(--shadow-terra);
+      transition:opacity 0.2s, transform 0.2s;
+    }
+    .contact-btn:hover { opacity:0.90; transform:translateY(-2px); }
+
+    /* ============================================================ RESPONSIVE */
+    @media (max-width:1024px) {
+      .nav { padding:20px 24px; }
+      .nav.stuck { padding:12px 24px; }
+      .nav-links, .nav-login, .nav-cta { display:none; }
+      .ham { display:flex; }
+      .roles-grid { grid-template-columns:1fr; max-width:540px; margin:0 auto; }
+      .features-grid { grid-template-columns:repeat(2,1fr); }
+      .features-head { grid-template-columns:1fr; }
+      .diff-grid { grid-template-columns:1fr; max-width:540px; margin:0 auto; }
+      .diff-head { grid-template-columns:1fr; }
+      .stats-grid { grid-template-columns:repeat(2,1fr); gap:32px; }
+      .workflow-steps { flex-direction:column; gap:32px; }
+      .workflow-steps::before { display:none; }
+      .workflow-step { text-align:left; display:flex; gap:20px; align-items:flex-start; padding:0; }
+      .ws-circle { margin:0; flex-shrink:0; }
+    }
+    @media (max-width:768px) {
+      section { padding:88px 20px; }
+      footer { padding:40px 20px; }
+      .hero-actions { flex-direction:column; align-items:center; }
+      .btn-primary,.btn-ghost,.btn-terra,.btn-terra-ghost { width:100%; max-width:300px; justify-content:center; }
+      .cta-actions { flex-direction:column; align-items:center; }
+      .stats-grid { gap:20px; }
+      .features-grid { grid-template-columns:1fr; }
+      .footer-inner { flex-direction:column; text-align:center; }
+      .footer-links { justify-content:center; }
+      .contact-box { padding:40px 28px; }
+    }
+    @media (prefers-reduced-motion:reduce) {
+      *,*::before,*::after { animation-duration:0.001ms!important; transition-duration:0.001ms!important; }
+      .hero-badge,.hero-sub,.hero-actions,.hero-scroll,
+      .role-card,.feat-card,.workflow-step,.diff-card,.stat-item { opacity:1!important; transform:none!important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ============================================================ NAVBAR -->
+<nav class="nav" id="navbar" role="navigation" aria-label="Main navigation">
+  <a href="#" class="nav-logo-text" aria-label="Synergasia home">Synergasia</a>
+  <ul class="nav-links" role="list">
+    <li><a href="#roles">Platform</a></li>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#how-it-works">How It Works</a></li>
+    <li><a href="#why">Why Us</a></li>
+  </ul>
+  <div class="nav-right">
+    <a id="nav-login-btn" class="nav-login" aria-label="Log in to Synergasia">Login</a>
+    <a href="mailto:info@synergasia.me?subject=Demo%20Request%20%E2%80%94%20Synergasia&body=Hi%20Synergasia%20Team%2C%0A%0AI%27d%20like%20to%20request%20a%20demo%20of%20the%20platform.%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AKind%20regards" class="nav-cta" aria-label="Request a demo">Request Demo</a>
+    <button class="ham" id="hamBtn" aria-label="Open menu" aria-expanded="false" aria-controls="mobileMenu">
+      <span></span><span></span><span></span>
+    </button>
+  </div>
+</nav>
+
+<div class="mob-menu" id="mobileMenu" role="dialog" aria-label="Mobile navigation">
+  <a href="#roles"        onclick="closeMob()">Platform</a>
+  <a href="#features"     onclick="closeMob()">Features</a>
+  <a href="#how-it-works" onclick="closeMob()">How It Works</a>
+  <a href="#why"          onclick="closeMob()">Why Us</a>
+  <a id="mob-login-btn" class="mob-cta-link" onclick="closeMob()">Login</a>
+  <a href="mailto:info@synergasia.me?subject=Demo%20Request%20%E2%80%94%20Synergasia&body=Hi%20Synergasia%20Team%2C%0A%0AI%27d%20like%20to%20request%20a%20demo%20of%20the%20platform.%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AKind%20regards" class="mob-cta-link" onclick="closeMob()">Request Demo</a>
+</div>
+
+
+<!-- ============================================================ HERO -->
+<section class="hero" aria-label="Hero">
+  <canvas id="hero-canvas" aria-hidden="true"></canvas>
+  <div class="hero-vignette" aria-hidden="true"></div>
+  <div class="hero-content">
+    <div class="hero-badge"><span class="badge-dot" aria-hidden="true"></span>Student Counseling Platform</div>
+    <h1 class="hero-title" aria-label="Guiding students toward their future">
+      <span class="clip"><span class="inner">Guiding Students</span></span>
+      <span class="clip"><span class="inner ital">Toward Their Future</span></span>
+    </h1>
+    <p class="hero-sub">A comprehensive counseling platform with role-based access for Admins, Counselors, and Students — multi-tenant, enterprise-grade.</p>
+    <div class="hero-actions">
+      <a href="mailto:info@synergasia.me?subject=Demo%20Request%20%E2%80%94%20Synergasia&body=Hi%20Synergasia%20Team%2C%0A%0AI%27d%20like%20to%20request%20a%20demo%20of%20the%20platform.%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AKind%20regards" class="btn-primary" aria-label="Request a demo">
+        Request Demo
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </a>
+      <a href="#roles" class="btn-ghost" aria-label="Explore the platform">Explore Platform</a>
+    </div>
+  </div>
+  <div class="hero-scroll" aria-hidden="true"><div class="scroll-bar"></div>Scroll</div>
+</section>
+
+
+<!-- ============================================================ TICKER -->
+<div class="ticker" aria-hidden="true">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+
+<!-- ============================================================ ROLES — white bg -->
+<section id="roles" class="roles-sect">
+  <div class="container">
+    <div class="roles-head">
+      <span class="section-label">One Platform · Three Roles</span>
+      <h2 class="section-title">Three Empowered <span class="terra-word">Perspectives</span></h2>
+      <p class="section-sub">Every stakeholder gets a workspace designed for exactly what they need — and only what they need.</p>
+    </div>
+    <div class="roles-grid">
+      <article class="role-card" aria-label="Admin role">
+        <div class="role-num" aria-hidden="true">01</div>
+        <div class="role-icon-wrap" aria-hidden="true">🛡️</div>
+        <h3 class="role-name">Admin</h3>
+        <p class="role-tagline">Command, customise, and intelligently oversee the entire platform.</p>
+        <ul class="role-feats" role="list">
+          <li><span class="chk" aria-hidden="true">✓</span>Manage counselors &amp; students with full CRUD</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Dynamic profile field builder &amp; categories</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Build and manage the university repository</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Full audit trail &amp; activity monitoring</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Admin-scoped data isolation per tenant</li>
+        </ul>
+      </article>
+      <article class="role-card" aria-label="Counselor role">
+        <div class="role-num" aria-hidden="true">02</div>
+        <div class="role-icon-wrap" aria-hidden="true">🎯</div>
+        <h3 class="role-name">Counselor</h3>
+        <p class="role-tagline">Focus on the students who need you — guided by data, tools, and clarity.</p>
+        <ul class="role-feats" role="list">
+          <li><span class="chk" aria-hidden="true">✓</span>Scoped access to assigned students only</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Assign tasks, set due dates, track progress</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Review activity portfolios &amp; give feedback</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Secure document upload with visibility control</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Recommend universities from admin catalogue</li>
+        </ul>
+      </article>
+      <article class="role-card" aria-label="Student role">
+        <div class="role-num" aria-hidden="true">03</div>
+        <div class="role-icon-wrap" aria-hidden="true">🚀</div>
+        <h3 class="role-name">Student</h3>
+        <p class="role-tagline">Own your journey — profile, portfolio, planner, and university planning in one place.</p>
+        <ul class="role-feats" role="list">
+          <li><span class="chk" aria-hidden="true">✓</span>Visual profile completion tracker</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Activity locker &amp; portfolio builder</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Calendar planner with smart reminders</li>
+          <li><span class="chk" aria-hidden="true">✓</span>University shortlisting: Reach, Target, Safety</li>
+          <li><span class="chk" aria-hidden="true">✓</span>Real-time push notifications</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ FEATURES — cream bg -->
+<section id="features" class="features-sect">
+  <div class="container">
+    <div class="features-head">
+      <div>
+        <span class="section-label">Platform Capabilities</span>
+        <div class="divider-line"></div>
+        <h2 class="section-title">Everything You Need,<br><span class="terra-word">Nothing You Don't</span></h2>
+      </div>
+      <p class="section-sub">Seven core capabilities that make Synergasia the only tool your counseling practice needs.</p>
+    </div>
+    <div class="features-grid">
+      <article class="feat-card" aria-label="Enterprise RBAC">
+        <div class="feat-icon" aria-hidden="true">🔐</div>
+        <h3>Enterprise RBAC</h3>
+        <p>Four permission levels enforced at every API endpoint and UI component. Developer → Admin → Counselor → Student.</p>
+      </article>
+      <article class="feat-card" aria-label="Dynamic Profile Builder">
+        <div class="feat-icon" aria-hidden="true">⚙️</div>
+        <h3>Dynamic Profiles</h3>
+        <p>Admins define custom fields, categories, and visibility rules. Text, number, date, and dropdown types supported.</p>
+      </article>
+      <article class="feat-card" aria-label="Task Management">
+        <div class="feat-icon" aria-hidden="true">✅</div>
+        <h3>Task Management</h3>
+        <p>Create and assign tasks with due dates. Auto-populates student planners. Status tracked: Pending → In Progress → Done.</p>
+      </article>
+      <article class="feat-card" aria-label="Activity Portfolio">
+        <div class="feat-icon" aria-hidden="true">📁</div>
+        <h3>Activity Portfolio</h3>
+        <p>Students log extracurriculars and outcomes. Counselors provide written feedback. Builds a rich application portfolio over time.</p>
+      </article>
+      <article class="feat-card" aria-label="University Planning">
+        <div class="feat-icon" aria-hidden="true">🎓</div>
+        <h3>University Planning</h3>
+        <p>Curated catalogue with rich data. Students categorise schools as Reach, Target, or Safety with counselor guidance.</p>
+      </article>
+      <article class="feat-card" aria-label="Document Management">
+        <div class="feat-icon" aria-hidden="true">📄</div>
+        <h3>Secure Documents</h3>
+        <p>Counselors upload PDFs, Word docs, and images to student profiles. Per-document visibility toggle. Role-enforced storage.</p>
+      </article>
+      <article class="feat-card" aria-label="Push Notifications">
+        <div class="feat-icon" aria-hidden="true">🔔</div>
+        <h3>Push Notifications</h3>
+        <p>Real-time in-app alerts and device push notifications for tasks, messages, feedback, and upcoming planner events.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ WORKFLOW — white bg -->
+<section id="how-it-works" class="workflow-sect" aria-label="How Synergasia works">
+  <div class="container">
+    <div class="workflow-head">
+      <span class="section-label">The Workflow</span>
+      <h2 class="section-title">From Setup to <span class="terra-word">Student Success</span></h2>
+      <p class="section-sub">A seamless end-to-end flow connecting your entire counseling operation.</p>
+    </div>
+    <div class="workflow-steps">
+      <div class="workflow-step" aria-label="Step 1">
+        <div class="ws-circle" aria-hidden="true">1</div>
+        <div class="ws-body">
+          <div class="ws-label">Admin Sets Up</div>
+          <p class="ws-desc">Create counselors, configure profile fields, and build your institution's university repository.</p>
+        </div>
+      </div>
+      <div class="workflow-step" aria-label="Step 2">
+        <div class="ws-circle" aria-hidden="true">2</div>
+        <div class="ws-body">
+          <div class="ws-label">Assign Students</div>
+          <p class="ws-desc">Students are assigned to counselors with one click. Role scoping is automatic — no extra config needed.</p>
+        </div>
+      </div>
+      <div class="workflow-step" aria-label="Step 3">
+        <div class="ws-circle" aria-hidden="true">3</div>
+        <div class="ws-body">
+          <div class="ws-label">Counsel &amp; Guide</div>
+          <p class="ws-desc">Counselors assign tasks, give feedback, upload documents, and track university shortlists.</p>
+        </div>
+      </div>
+      <div class="workflow-step" aria-label="Step 4">
+        <div class="ws-circle" aria-hidden="true">4</div>
+        <div class="ws-body">
+          <div class="ws-label">Students Build</div>
+          <p class="ws-desc">Students log activities, complete tasks, manage their planner, and explore their university list.</p>
+        </div>
+      </div>
+      <div class="workflow-step" aria-label="Step 5">
+        <div class="ws-circle" aria-hidden="true">5</div>
+        <div class="ws-body">
+          <div class="ws-label">Admin Oversees</div>
+          <p class="ws-desc">Full audit trail and activity monitoring keep admins in complete control at all times.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ DIFFERENTIATORS — cream bg -->
+<section id="why" class="diff-sect">
+  <div class="container">
+    <div class="diff-head">
+      <div>
+        <span class="section-label">Why Synergasia</span>
+        <div class="divider-line"></div>
+        <h2 class="section-title">Two Things That Set Us <span class="terra-word">Apart</span></h2>
+      </div>
+      <p class="section-sub">The features other platforms don't think about — until their clients ask for them.</p>
+    </div>
+    <div class="diff-grid">
+      <article class="diff-card" aria-label="Fully dynamic profiles">
+        <div class="diff-num" aria-hidden="true">01</div>
+        <div class="diff-card-line"></div>
+        <span class="diff-icon" aria-hidden="true">🎨</span>
+        <h3>Fully Dynamic Profiles</h3>
+        <p>Admins define exactly what information students provide. Custom fields, categories, and visibility rules mean the platform adapts to every firm's unique process — no two institutions need to look the same.</p>
+      </article>
+      <article class="diff-card" aria-label="Enterprise-grade RBAC">
+        <div class="diff-num" aria-hidden="true">02</div>
+        <div class="diff-card-line"></div>
+        <span class="diff-icon" aria-hidden="true">🏢</span>
+        <h3>Enterprise Multi-Tenant RBAC</h3>
+        <p>Four permission levels with complete data isolation between firms. Every action is authorised by role — at the API, at the query, and at the UI. No cross-contamination between tenants. Ever.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ STATS — terracotta bg -->
+<section class="stats-sect" aria-label="Platform statistics">
+  <div class="container">
+    <div class="stats-title">
+      <span class="section-label inv">By The Numbers</span>
+      <h2 class="section-title inv">Built for <em style="font-style:italic;opacity:0.82">Serious Scale</em></h2>
+    </div>
+    <div class="stats-grid">
+      <div class="stat-item"><div class="stat-divider"></div><div class="stat-val">4</div><div class="stat-lbl">Permission levels — from Developer to Student</div></div>
+      <div class="stat-item"><div class="stat-divider"></div><div class="stat-val">100%</div><div class="stat-lbl">Role-enforced data isolation across all tenants</div></div>
+      <div class="stat-item"><div class="stat-divider"></div><div class="stat-val">8+</div><div class="stat-lbl">Database entity types in the full schema</div></div>
+      <div class="stat-item"><div class="stat-divider"></div><div class="stat-val">3</div><div class="stat-lbl">Tailored workspaces, one unified platform</div></div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ CTA — white bg -->
+<section id="cta" class="cta-sect" aria-label="Call to action">
+  <div class="container">
+    <div class="cta-inner">
+      <div class="terra-pill">Get Started</div>
+      <h2 class="section-title">Ready to <span class="terra-word">Transform</span><br>Your Practice?</h2>
+      <p>Join counseling firms already using Synergasia to streamline operations, empower students, and build world-class university databases.</p>
+      <div class="cta-actions">
+        <a href="mailto:info@synergasia.me?subject=Demo%20Request%20%E2%80%94%20Synergasia&body=Hi%20Synergasia%20Team%2C%0A%0AI%27d%20like%20to%20request%20a%20demo%20of%20the%20platform.%0A%0APlease%20let%20me%20know%20your%20availability.%0A%0AKind%20regards" class="btn-terra" aria-label="Request a demo via email">
+          Request a Demo
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </a>
+        <button class="btn-terra-ghost" onclick="openContact()" aria-label="View contact information">Contact Us</button>
+      </div>
+      <div class="pillars" role="list">
+        <div class="pillar" role="listitem"><span class="pillar-dot"></span>Multi-Tenant Architecture</div>
+        <div class="pillar" role="listitem"><span class="pillar-dot"></span>Role-Based Access Control</div>
+        <div class="pillar" role="listitem"><span class="pillar-dot"></span>Dynamic Profiles</div>
+        <div class="pillar" role="listitem"><span class="pillar-dot"></span>Real-Time Notifications</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ============================================================ FOOTER -->
+<footer role="contentinfo">
+  <div class="footer-inner">
+    <div class="footer-logo">Synergasia</div>
+    <nav class="footer-links" aria-label="Footer navigation">
+      <a href="#roles">Platform</a>
+      <a href="#features">Features</a>
+      <a href="#why">Why Us</a>
+      <a onclick="openContact()" role="button" tabindex="0" onkeydown="if(event.key==='Enter')openContact()">Contact</a>
+    </nav>
+    <p class="footer-copy">© 2026 Synergasia. Guiding students toward their future.</p>
+  </div>
+</footer>
+
+
+<!-- ============================================================ CONTACT MODAL -->
+<div class="contact-modal" id="contactModal" role="dialog" aria-modal="true" aria-label="Contact Synergasia">
+  <div class="contact-overlay" onclick="closeContact()" aria-hidden="true"></div>
+  <div class="contact-box">
+    <button class="contact-close" onclick="closeContact()" aria-label="Close contact dialog">✕</button>
+    <div class="contact-terra-bar"></div>
+    <h2>Get in Touch</h2>
+    <p>Have questions about Synergasia or want to learn more about the platform? We'd love to hear from you.</p>
+
+    <div class="contact-email-row">
+      <div class="contact-email-icon" aria-hidden="true">✉️</div>
+      <div>
+        <div class="contact-email-label">General &amp; Demo Enquiries</div>
+        <div class="contact-email-value">
+          <a href="mailto:info@synergasia.me" aria-label="Email info@synergasia.me">info@synergasia.me</a>
+        </div>
+      </div>
+    </div>
+
+    <a href="mailto:info@synergasia.me?subject=Enquiry%20%E2%80%94%20Synergasia&body=Hi%20Synergasia%20Team%2C%0A%0A" class="contact-btn" aria-label="Open email client to contact Synergasia">
+      Send us an Email
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M3 8h10M9 4l4 4-4 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    </a>
+  </div>
+</div>
+
+
+<!-- ============================================================ SCRIPTS -->
+<script>
+/* ================================================================
+   APP URL — update this one line when the hosted URL changes
+================================================================ */
+const APP_URL = 'https://synergasia.replit.app/';
+
+// Wire login buttons
+document.querySelectorAll('#nav-login-btn, #mob-login-btn').forEach(btn => {
+  btn.href = APP_URL;
+  btn.target = '_blank';
+  btn.rel = 'noopener noreferrer';
+});
+
+/* ---- SAFETY REVEAL ---- */
+setTimeout(() => {
+  document.querySelectorAll('.hero-badge,.hero-sub,.hero-actions,.hero-scroll').forEach(el => {
+    if (getComputedStyle(el).opacity === '0') { el.style.opacity='1'; el.style.transform='none'; }
+  });
+  document.querySelectorAll('.hero-title .inner').forEach(el => { el.style.transform='none'; });
+}, 2800);
+
+/* ---- MOBILE MENU ---- */
+const hamBtn = document.getElementById('hamBtn');
+const mobMenu = document.getElementById('mobileMenu');
+let menuOpen = false;
+function openMob()  { menuOpen=true;  hamBtn.classList.add('open');    hamBtn.setAttribute('aria-expanded','true');  mobMenu.classList.add('open');    document.body.style.overflow='hidden'; }
+function closeMob() { menuOpen=false; hamBtn.classList.remove('open'); hamBtn.setAttribute('aria-expanded','false'); mobMenu.classList.remove('open'); document.body.style.overflow=''; }
+hamBtn.addEventListener('click', () => menuOpen ? closeMob() : openMob());
+
+/* ---- CONTACT MODAL ---- */
+const contactModal = document.getElementById('contactModal');
+function openContact() {
+  contactModal.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  // Focus close button for accessibility
+  setTimeout(() => contactModal.querySelector('.contact-close').focus(), 50);
+}
+function closeContact() {
+  contactModal.classList.remove('open');
+  document.body.style.overflow = '';
+}
+// Close on Escape
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && contactModal.classList.contains('open')) closeContact(); });
+
+/* ---- NAVBAR SCROLL ---- */
+const navbar = document.getElementById('navbar');
+window.addEventListener('scroll', () => { navbar.classList.toggle('stuck', window.scrollY > 60); }, { passive:true });
+
+/* ---- TICKER ---- */
+const tickerItems = [
+  'Multi-Tenant Architecture','Role-Based Access Control','Push Notifications',
+  'Dynamic Profile Builder','Secure Document Vault','Activity Portfolio',
+  'University Planning','Planner Integration','Enterprise RBAC',
+  'Real-Time Alerts','Audit Trail','Student Shortlisting'
+];
+const track = document.getElementById('tickerTrack');
+[...tickerItems, ...tickerItems].forEach(t => {
+  const el = document.createElement('span');
+  el.className = 'ticker-item';
+  el.innerHTML = `<span aria-hidden="true">◆</span>${t}`;
+  track.appendChild(el);
+});
+
+/* ---- THREE.JS ---- */
+(function initThree() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!window.THREE) return;
+  const scene = new THREE.Scene();
+  const W = window.innerWidth, H = window.innerHeight;
+  const camera = new THREE.PerspectiveCamera(58, W/H, 0.1, 500);
+  camera.position.z = 32;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.setClearColor(0x000000, 0);
+
+  const isMobile = W < 768;
+  const pCount = isMobile ? 60 : 160;
+  const pPos = new Float32Array(pCount*3);
+  const pVel = [];
+  for (let i=0; i<pCount; i++) {
+    const x=(Math.random()-0.5)*90, y=(Math.random()-0.5)*65, z=(Math.random()-0.5)*35;
+    pPos[i*3]=x; pPos[i*3+1]=y; pPos[i*3+2]=z;
+    pVel.push({ ox:x, oy:y, oz:z });
+  }
+  const pGeo = new THREE.BufferGeometry();
+  pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+  const pMat = new THREE.PointsMaterial({ color:0xF5F3F0, size:0.20, transparent:true, opacity:0.42, sizeAttenuation:true });
+  const points = new THREE.Points(pGeo, pMat);
+  scene.add(points);
+
+  const lVerts = []; const maxD = isMobile ? 11 : 15;
+  for (let i=0; i<pCount; i++) for (let j=i+1; j<pCount; j++) {
+    const dx=pVel[i].ox-pVel[j].ox, dy=pVel[i].oy-pVel[j].oy, dz=pVel[i].oz-pVel[j].oz;
+    if (Math.sqrt(dx*dx+dy*dy+dz*dz)<maxD) lVerts.push(pVel[i].ox,pVel[i].oy,pVel[i].oz,pVel[j].ox,pVel[j].oy,pVel[j].oz);
+  }
+  if (lVerts.length) {
+    const lGeo = new THREE.BufferGeometry();
+    lGeo.setAttribute('position', new THREE.BufferAttribute(new Float32Array(lVerts), 3));
+    scene.add(new THREE.LineSegments(lGeo, new THREE.LineBasicMaterial({ color:0xF5F3F0, transparent:true, opacity:0.08 })));
+  }
+
+  function makeSphere(color, r, x, y, z) {
+    const mesh = new THREE.Mesh(new THREE.SphereGeometry(r,28,28), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.80 }));
+    mesh.position.set(x,y,z);
+    mesh.add(new THREE.Mesh(new THREE.TorusGeometry(r*1.85,0.06,8,48), new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.18 })));
+    scene.add(mesh); return mesh;
+  }
+  const sAdmin=makeSphere(0xFFFFFF,1.6,-9,3,-4), sCoun=makeSphere(0xF5F3F0,1.3,9,-2,-2), sStud=makeSphere(0xEAD4CE,1.0,0,-7,2);
+  [[sAdmin,sCoun],[sCoun,sStud],[sAdmin,sStud]].forEach(([a,b]) => {
+    const geo=new THREE.BufferGeometry();
+    geo.setAttribute('position',new THREE.BufferAttribute(new Float32Array([a.position.x,a.position.y,a.position.z,b.position.x,b.position.y,b.position.z]),3));
+    scene.add(new THREE.LineSegments(geo,new THREE.LineBasicMaterial({color:0xFFFFFF,transparent:true,opacity:0.18})));
+  });
+
+  let mx=0,my=0,cx=0,cy=0;
+  window.addEventListener('mousemove',e=>{mx=(e.clientX/window.innerWidth-0.5)*2;my=-(e.clientY/window.innerHeight-0.5)*2;},{passive:true});
+
+  let t=0;
+  (function tick() {
+    requestAnimationFrame(tick); t+=0.004;
+    for (let i=0;i<pCount;i++) {
+      const v=pVel[i];
+      pPos[i*3]=v.ox+Math.sin(t*0.7+i*0.31)*0.6;
+      pPos[i*3+1]=v.oy+Math.cos(t*0.5+i*0.41)*0.6;
+      pPos[i*3+2]=v.oz+Math.sin(t*0.6+i*0.51)*0.4;
+    }
+    pGeo.attributes.position.needsUpdate=true;
+    sAdmin.position.y=3+Math.sin(t*0.7)*0.6;
+    sCoun.position.y=-2+Math.sin(t*0.5+1.1)*0.55;
+    sStud.position.y=-7+Math.sin(t*0.6+2.3)*0.5;
+    sAdmin.children[0].rotation.z=t*0.4;
+    sCoun.children[0].rotation.z=-t*0.35;
+    sStud.children[0].rotation.z=t*0.5;
+    points.rotation.y=t*0.035;
+    cx+=(mx*2.5-cx)*0.04; cy+=(my*1.8-cy)*0.04;
+    camera.position.x=cx; camera.position.y=cy;
+    camera.lookAt(scene.position);
+    renderer.render(scene,camera);
+  })();
+  window.addEventListener('resize',()=>{const w=window.innerWidth,h=window.innerHeight;camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h);},{passive:true});
+})();
+
+/* ---- GSAP ---- */
+(function initGSAP() {
+  if (!window.gsap) return;
+  gsap.registerPlugin(ScrollTrigger);
+  const tl = gsap.timeline({ delay:0.15 });
+  tl.to('.hero-badge',{opacity:1,y:0,duration:0.7,ease:'power3.out'})
+    .to('.hero-title .inner',{y:0,duration:0.9,ease:'power3.out',stagger:0.12},'-=0.3')
+    .to('.hero-sub',{opacity:1,y:0,duration:0.7,ease:'power2.out'},'-=0.5')
+    .to('.hero-actions',{opacity:1,y:0,duration:0.7,ease:'power2.out'},'-=0.4')
+    .to('.hero-scroll',{opacity:1,duration:0.6},'-=0.1');
+  gsap.to('.role-card',{scrollTrigger:{trigger:'.roles-grid',start:'top 80%'},opacity:1,y:0,duration:0.75,ease:'power3.out',stagger:0.14});
+  gsap.to('.feat-card',{scrollTrigger:{trigger:'.features-grid',start:'top 82%'},opacity:1,y:0,duration:0.65,ease:'power2.out',stagger:0.08});
+  gsap.to('.workflow-step',{scrollTrigger:{trigger:'.workflow-steps',start:'top 78%'},opacity:1,y:0,duration:0.7,ease:'power3.out',stagger:0.12});
+  gsap.to('.diff-card',{scrollTrigger:{trigger:'.diff-grid',start:'top 80%'},opacity:1,y:0,duration:0.75,ease:'power3.out',stagger:0.14});
+  gsap.to('.stat-item',{scrollTrigger:{trigger:'.stats-grid',start:'top 82%'},opacity:1,y:0,duration:0.65,ease:'power2.out',stagger:0.10});
+  gsap.utils.toArray('.section-title,.section-label,.section-sub,.divider-line').forEach(el=>{
+    gsap.from(el,{scrollTrigger:{trigger:el,start:'top 88%',once:true},opacity:0,y:20,duration:0.65,ease:'power2.out'});
+  });
+  gsap.from('.cta-inner',{scrollTrigger:{trigger:'.cta-sect',start:'top 75%'},opacity:0,y:36,duration:0.8,ease:'power3.out'});
+  gsap.to('.hero-content',{scrollTrigger:{trigger:'.hero',start:'top top',end:'bottom top',scrub:true},y:-60,ease:'none'});
+})();
+</script>
+
+</body>
+</html>
